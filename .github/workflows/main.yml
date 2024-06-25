@@ -1,27 +1,36 @@
-name: Build driver solution
+name: Build Windows Driver
+
 on:
   push:
     branches:
       - main
+  pull_request:
+    branches:
+      - main
+
 jobs:
   build:
-    strategy:
-      matrix:
-        configuration: [Debug, Release]
-        platform: [x64]
-    runs-on: windows-2022
-    env:
-      Solution_Path: UsbDk.sln
+    runs-on: windows-latest
+    
     steps:
-      - name: Check out repository code
-        uses: actions/checkout@v3
-
-      - name: Add MSBuild to PATH
-        uses: microsoft/setup-msbuild@v1.0.2
-
-      - name: Build solution
-        run: |
-          msbuild ${{ env.Solution_Path }} -p:Configuration:${{ env.Configuration }} -p:Platform:${{ env.Platform }}
-        env:
-          Configuration: ${{ matrix.configuration }}
-          Platform: ${{ matrix.platform }}
+    - name: Checkout repository
+      uses: actions/checkout@v2
+      
+    - name: Set up MSVC environment
+      uses: microsoft/setup-msbuild@v1
+      
+    - name: Install Windows Driver Kit (WDK)
+      run: |
+        choco install wdk --yes
+        refreshenv
+        
+    - name: Build driver
+      run: |
+        msbuild /p:Configuration=Release /p:Platform=x64 UsbDk.sln
+        
+    - name: Upload driver artifacts
+      if: success()
+      uses: actions/upload-artifact@v2
+      with:
+        name: driver-artifacts
+        path: path/to/your/driver/artifacts
