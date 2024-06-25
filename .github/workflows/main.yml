@@ -15,10 +15,10 @@ jobs:
       uses: microsoft/setup-msbuild@v1.1.0
 
     - name: Install Windows 10 SDK
-      uses: actions/checkout@v4
-      uses: GuillaumeFalourd/setup-windows10-sdk-action@v2
-      with:
-        sdk-version: 20348
+      - uses: actions/checkout@v4
+      - uses: GuillaumeFalourd/setup-windows10-sdk-action@v2
+        with:
+          sdk-version: 20348
 
     - name: Install WDK 10
       run: |
