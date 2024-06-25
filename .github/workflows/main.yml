@@ -9,26 +9,28 @@ jobs:
 
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v3
-
-    - name: Set up MSBuild
-      uses: microsoft/setup-msbuild@v1
+      uses: actions/checkout@v2
 
     - name: Set up Visual Studio
-      uses: microsoft/setup-visualstudio@v1
+      uses: microsoft/setup-msbuild@v1.0.3
+
+    - name: Install CMake
+      uses: lukka/get-cmake@v3.21.3
+
+    - name: Install NuGet
+      run: choco install nuget
+
+    - name: Restore NuGet packages
+      run: nuget restore UsbDk.sln
+
+    - name: Configure with CMake
+      run: cmake -Bbuild -H. -G "Visual Studio 16 2019" -A x64
+
+    - name: Build with MSBuild
+      run: msbuild build/UsbDk.sln /p:Configuration=Release
+
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v2
       with:
-        vs-version: 2022
-
-    - name: Install Visual Studio Components
-      run: |
-        choco install visualstudio2022buildtools
-        choco install visualstudio2022-workload-vctools
-
-    - name: Install Windows Driver Kit (WDK)
-      run: |
-        choco install wdk10
-
-    - name: Build UsbDk
-      run: |
-        cd path/to/UsbDk
-        msbuild UsbDk.sln /t:Rebuild /p:Configuration=Release /p:Platform=x64
+        name: UsbDk
+        path: build/Release
