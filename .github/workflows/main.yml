@@ -1,4 +1,4 @@
-name: Build Windows Driver
+name: Build UsbDk Driver
 
 on:
   push:
@@ -11,26 +11,28 @@ on:
 jobs:
   build:
     runs-on: windows-latest
-    
+
     steps:
     - name: Checkout repository
       uses: actions/checkout@v2
-      
-    - name: Set up MSVC environment
-      uses: microsoft/setup-msbuild@v1
       
     - name: Install Windows Driver Kit (WDK)
       run: |
         choco install wdk --yes
         refreshenv
         
-    - name: Build driver
+    - name: Clone UsbDk repository
       run: |
-        msbuild /p:Configuration=Release /p:Platform=x64 UsbDk.sln
+        git clone https://github.com/daynix/UsbDk.git
         
-    - name: Upload driver artifacts
+    - name: Build UsbDk
+      working-directory: ./UsbDk
+      run: |
+        .\buildAll.bat Release
+        
+    - name: Upload UsbDk driver artifacts
       if: success()
       uses: actions/upload-artifact@v2
       with:
-        name: driver-artifacts
-        path: path/to/your/driver/artifacts
+        name: usbdk-artifacts
+        path: ./UsbDk/UsbDk/Build/Driver/Win10/x64/Release
