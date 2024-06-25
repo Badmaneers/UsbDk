@@ -1,12 +1,7 @@
-name: Build UsbDk Driver
+name: Build UsbDk
 
 on:
-  push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
+  workflow_dispatch:
 
 jobs:
   build:
@@ -14,25 +9,26 @@ jobs:
 
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v2
-      
+      uses: actions/checkout@v3
+
+    - name: Set up MSBuild
+      uses: microsoft/setup-msbuild@v1
+
+    - name: Set up Visual Studio
+      uses: microsoft/setup-visualstudio@v1
+      with:
+        vs-version: 2022
+
+    - name: Install Visual Studio Components
+      run: |
+        choco install visualstudio2022buildtools
+        choco install visualstudio2022-workload-vctools
+
     - name: Install Windows Driver Kit (WDK)
       run: |
-        choco install wdk --yes
-        refreshenv
-        
-    - name: Clone UsbDk repository
-      run: |
-        git clone https://github.com/daynix/UsbDk.git
-        
+        choco install wdk10
+
     - name: Build UsbDk
-      working-directory: ./UsbDk
       run: |
-        .\buildAll.bat Release
-        
-    - name: Upload UsbDk driver artifacts
-      if: success()
-      uses: actions/upload-artifact@v2
-      with:
-        name: usbdk-artifacts
-        path: ./UsbDk/UsbDk/Build/Driver/Win10/x64/Release
+        cd path/to/UsbDk
+        msbuild UsbDk.sln /t:Rebuild /p:Configuration=Release /p:Platform=x64
