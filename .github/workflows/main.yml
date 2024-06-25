@@ -1,4 +1,4 @@
-name: Build UsbDk
+name: Build UsbDk Driver
 
 on:
   workflow_dispatch:
@@ -12,25 +12,38 @@ jobs:
       uses: actions/checkout@v2
 
     - name: Set up Visual Studio
-      uses: microsoft/setup-msbuild@v1.0.3
+      uses: microsoft/setup-msbuild@v1.1.0
 
-    - name: Install CMake
-      uses: lukka/get-cmake@v3.29.6
+    - name: Install Windows 10 SDK
+      uses: actions/checkout@v4
+      uses: GuillaumeFalourd/setup-windows10-sdk-action@v2
+      with:
+        sdk-version: 20348
 
-    - name: Install NuGet
-      run: choco install nuget
+    - name: Install WDK 10
+      run: |
+        choco install windows-driver-kit
 
-    - name: Restore NuGet packages
-      run: nuget restore UsbDk.sln
+    - name: Install WiX Toolset
+      run: |
+        choco install wixtoolset
 
-    - name: Configure with CMake
-      run: cmake -Bbuild -H. -G "Visual Studio 16 2019" -A x64
+    - name: Set up WiX Toolset path
+      run: |
+        $env:Path += ";C:\Program Files (x86)\WiX Toolset v3.11\bin"
+        echo "::add-path::C:\Program Files (x86)\WiX Toolset v3.11\bin"
 
-    - name: Build with MSBuild
-      run: msbuild build/UsbDk.sln /p:Configuration=Release
+    - name: Build UsbDk project
+      run: |
+        msbuild UsbDk.sln /p:Configuration=Release /p:Platform=x64
 
-    - name: Upload build artifacts
+    - name: Create MSI installer
+      run: |
+        candle.exe path\to\UsbDk.wxs
+        light.exe path\to\UsbDk.wixobj -o path\to\output\UsbDk.msi
+
+    - name: Upload MSI
       uses: actions/upload-artifact@v2
       with:
-        name: UsbDk
-        path: build/Release
+        name: UsbDk-installer
+        path: path\to\output\UsbDk.msi
